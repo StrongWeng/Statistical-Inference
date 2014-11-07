@@ -1,0 +1,74 @@
+---
+title: "An Analysis on ToothGrowth"
+author: "Summers Weng"
+date: "Tuesday, October 21, 2014"
+output: word_document
+---
+
+## Introduction
+Now in the second portion of the class, we're going to analyze the ToothGrowth data in the R datasets package. 
+Load the ToothGrowth data and perform some basic exploratory data analyses 
+Provide a basic summary of the data.
+Use confidence intervals and hypothesis tests to compare tooth growth by supp and dose. (Use the techniques from class even if there's other approaches worth considering)
+State your conclusions and the assumptions needed for your conclusions. 
+## Analysis and Inference
+The data we are given are built-in data set in R, a research on the effect of vitamin C on tooth growth in guinea pigs. As accompanied description, the response is the length of odontoblasts (teeth) in each of 10 guinea pigs at each of three dose levels of Vitamin C (0.5, 1, and 2 mg) with each of two delivery methods (orange juice or ascorbic acid).
+We first examine our data's structure to determine whether we need to recode them or do any data transformation. 
+```{r}
+data(ToothGrowth)
+str(ToothGrowth)
+```
+As we show above, the data set has 3 variables and 60 observations. "len" variable which is numeric denotes the length of tooth, "supp" variable which is categorical denotes delivery methods, and "dose" variable wich is numeric denotes how much vitamin C was consumed per dose. 
+In this case, we treat the "dose" variable as a factor, so we need to  transform it into a categorical variable of 3 levels. In addition, Before we implement statistical anlysis, we check our response variable for normality.
+```{r, echo=T}
+par(mfrow=c(1,2))
+ToothGrowth$dose=as.factor(ToothGrowth$dose)
+hist(ToothGrowth$len,breaks=24,col=topo.colors(24))
+qqnorm(ToothGrowth$len)
+qqline(ToothGrowth$len)
+```
+The normal plot on response variable seems not to be normal, and the histogram shows a bimodal distribution. As a result, we proceed to plot  histograms on response variable for each delivery method to see whether this bimodal distribution was caused by it.
+```{r}
+par(mfrow=c(2,2))
+with(ToothGrowth,hist(len[supp=="OJ"],col=rainbow(24)))
+with(ToothGrowth,hist(len[supp=="VC"],col=heat.colors(24)))
+with(ToothGrowth,qqnorm(len[supp=="OJ"],col=rainbow(24)))
+with(ToothGrowth,qqline(len[supp=="OJ"],main="normal plot on OJ"))
+with(ToothGrowth,qqnorm(len[supp=="VC"],col=heat.colors(24)))
+with(ToothGrowth,qqline(len[supp=="VC"]))
+```
+The normal plot for delivery method of orange juice seems skewed to the left; however, seems to be normally distributed for delivery method of ascorbic acid.
+We now try to understand how response variable distributes based on different types of delivery methods and doses. below are summary and plots for the exploratory analysis.
+```{r}
+library(ggplot2)
+test=aggregate(ToothGrowth$len,by=list(ToothGrowth$dose,ToothGrowth$supp),summary)
+test
+boxplot(len~supp,data=ToothGrowth,col=c("blue","violet"))
+qplot(dose,len,facets=dose~supp,colour=dose,data=ToothGrowth,geom="boxplot")
+```
+From above, the length increases by incremental dose for both delivery methods(orange juice and ascorbic acid). However, we need to test whether the differences are statistically significant. Thus, we design two comparison plans. One compares the difference among three levels within each delivery method, and the other way compares the difference at the same dose level between delivery methods.
+## Differences within each delivery method
+In this comparison plan, we use analysis of variance(F Test) to compare the difference among three levels of dose within each delvery method because there are more than two levels in the explanatory variable.
+```{r}
+dosevc=aov(len~dose,data=ToothGrowth[ToothGrowth$supp=="VC",])
+summary(dosevc)
+TukeyHSD(dosevc)
+```
+The result shows that the difference among three levels of dose is statistically significant, and the pairwise comparisons by TukeyHSD also show the difference of each pair is statistically signficant. Hence, we reject the null hypothesis in favors of alternative hypothesis. We conclude there are differences among length in tooth from different dose quantiy of vitamin C.
+```{r}
+doseoj=aov(len~dose,data=ToothGrowth[ToothGrowth$supp=="OJ",])
+summary(doseoj)
+TukeyHSD(doseoj)
+```
+The result shows that the difference among three levels of dose within ascorbic acid method is statistically significant, and the pairwise compaison by TukeyHSD also show the difference of each pair is statistically signifcant. Hence, we reject the null hypothesis in favors of alternative hypothesis. 
+Next, we are going to compare different delivery methods at every levels of dose. For there are two levels at each levels, we employ student t stest to implement this analysis.
+```{r}
+ToothGrowth1=subset(ToothGrowth, ToothGrowth$dose==0.5)
+with(ToothGrowth1,t.test(len[supp=="OJ"],len[supp=="VC"]))
+ToothGrowth2=subset(ToothGrowth, ToothGrowth$dose==1)
+t.test(ToothGrowth2$len~ToothGrowth2$supp)
+ToothGrowth3=subset(ToothGrowth, ToothGrowth$dose==2)
+t.test(ToothGrowth3$len~ToothGrowth3$supp)
+```
+As the result above shows, except the comaprison at dose qnqntity of, the other two comparisons are significant. 
+From analyses above, we conclude that in each delivery method, the differences of tooth among different doses of vitamin C are significant. However, at the level of dose 2, the difference is not significant betwee delivery methods, while the other two levels of dose are statistically significant between delivery methods.

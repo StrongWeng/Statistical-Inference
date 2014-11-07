@@ -1,0 +1,53 @@
+---
+title: "Statistical Inference Project"
+author: "Summers Weng"
+date: "Tuesday, October 21, 2014"
+output: word_document
+---
+## Introduction to Project
+The exponential distribution can be simulated in R with rexp(n, lambda) where lambda is the rate parameter. The mean of exponential distribution is 1/lambda and the standard deviation is also also 1/lambda. Set lambda = 0.2 for all of the simulations. In this simulation, you will investigate the distribution of averages of 40 exponential(0.2)s. Note that you will need to do a thousand or so simulated averages of 40 exponentials.
+
+Illustrate via simulation and associated explanatory text the properties of the distribution of the mean of 40 exponential(0.2)s.  You should
+1. Show where the distribution is centered at and compare it to the theoretical center of the distribution.
+2. Show how variable it is and compare it to the theoretical variance of the distribution.
+3. Show that the distribution is approximately normal.
+4. Evaluate the coverage of the confidence interval for 1/lambda.
+
+## Simulation
+We are given rate parameter lambda eauals to 0.2 for an exponential distribution. Therefore, we know that mu and standard deviation must both be 5 for mu and standard deviation of exponential distribution are both the inverse of lambda.
+Next, we conduct 1000 times of randomly sample of 40 with lambda=0.2. The statistics of sampling distribution is provided below. 
+
+```{r, echo=T}
+## set seed
+set.seed(12)
+## build the simulations of 1000 times
+simulation=NULL;simulation1000=NULL
+for(i in 1:1000){
+    simulation=rexp(40,0.2)
+    simulation1000[i]=cbind(mean(simulation))
+}
+## tidy up the data and compute the statistics of sampling distributions.
+mean(simulation1000)
+sd(simulation1000)
+```
+From 1000 times of simulation, we got grand mean of 5.01 and standard error of 0.774. The distribution of this simulation centers around 5.01 with a standard error of 0.774.
+Our mu, which is 5, is almost equal to this grand mean(5.01). As we also know, the standard deviation for this exponential distriution is 5, too. According to Central Limit Thorem, standard error would be the standard deviation divided by square root of sample size as we show below, which is also very close to our simulation result(0.774). 
+
+```{r}
+SE=5/sqrt(40)
+print(SE)
+```
+As our estimate for mu, the standard error of our simulation is also very close to the sigma of exponential distribution. Below, we also see the shape of distribution get more sysmetrial than our plot of one sample at the first.
+```{r}
+hist(simulation1000,breaks=24,col=terrain.colors(24),main="Sampling Distribution of simulation")
+plot(density(simulation1000),col="red",main="density plot on simulation")
+```
+The plots show ths exponential distribution of this simulation is bell-shaped and approximately symetrical, a normal distribution.
+## Statistical Inference
+The fonfidence interval for this simulation at significance level 0.5 is calculated below.
+
+```{r}
+intervals=5.01+c(-1,1)*qnorm(0.975)*sd(simulation1000)
+intervals
+```
+The 95% confidence interval is `r intervals`.
